@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Author {
+  id    Int     @id @default(autoincrement()) @db.UnsignedInt
+  name  String  @db.VarChar(80)
+  Issue Issue[]
+}
+
+model Category {
+  id    Int     @id @default(autoincrement())
+  name  String  @db.VarChar(45)
+  Issue Issue[]
+}
+
+model Holding {
+  id          Int           @id @default(autoincrement()) @db.UnsignedInt
+  serial_no   String        @db.VarChar(60)
+  reserved_at DateTime      @db.Timestamp(0)
+  is_removed  Int           @default(0) @db.TinyInt
+  issue_id    Int           @db.UnsignedInt
+  Issue       Issue         @relation(fields: [issue_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Holding_Issue1")
+  Removed     Removed[]
+  Reservation Reservation[]
+
+  @@index([issue_id], map: "fk_Holding_Issue1_idx")
+}
+
+model Issue {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  title       String    @db.VarChar(80)
+  category_id Int
+  author_id   Int       @db.UnsignedInt
+  Holding     Holding[]
+  Author      Author    @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Issue_Author1")
+  Category    Category  @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Issue_Category1")
+
+  @@index([author_id], map: "fk_Issue_Author1_idx")
+  @@index([category_id], map: "fk_Issue_Category1_idx")
+}
+
+model Members {
+  id          Int           @id @default(autoincrement()) @db.UnsignedInt
+  unique_id   String        @db.VarChar(45)
+  table_id    Int
+  User_Table  User_Table    @relation(fields: [table_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Members_User_Table1")
+  Reservation Reservation[]
+
+  @@index([table_id], map: "fk_Members_User_Table1_idx")
+}
+
+model Removed {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  reason     String   @db.Text
+  removed_at DateTime @db.Timestamp(0)
+  holding_id Int      @db.UnsignedInt
+  Holding    Holding  @relation(fields: [holding_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Removed_Holding1")
+
+  @@index([holding_id], map: "fk_Removed_Holding1_idx")
+}
+
+model Reservation {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  reserved_at DateTime @db.Timestamp(0)
+  due_date    DateTime @db.Timestamp(0)
+  is_received DateTime @db.Timestamp(0)
+  holding_id  Int      @db.UnsignedInt
+  members_id  Int      @db.UnsignedInt
+  Holding     Holding  @relation(fields: [holding_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reservation_Holding1")
+  Members     Members  @relation(fields: [members_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reservation_Members1")
+
+  @@index([holding_id], map: "fk_Reservation_Holding1_idx")
+  @@index([members_id], map: "fk_Reservation_Members1_idx")
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(45)
+  User User[]
+}
+
+model Staff {
+  nic         Int         @id @db.UnsignedInt
+  name        String      @db.VarChar(255)
+  mobile      String      @db.VarChar(11)
+  joined_at   DateTime    @db.Timestamp(0)
+  is_banned   Int         @default(0) @db.TinyInt
+  banned_at   DateTime?   @db.Timestamp(0)
+  roles_id    Int
+  Staff_Roles Staff_Roles @relation(fields: [roles_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Staff_Staff_Roles1")
+
+  @@index([roles_id], map: "fk_Staff_Staff_Roles1_idx")
+}
+
+model Staff_Roles {
+  id    Int     @id @default(autoincrement())
+  name  String  @db.VarChar(45)
+  Staff Staff[]
+}
+
+model Student {
+  registration_no Int       @id @db.UnsignedInt
+  name            String    @db.VarChar(255)
+  grade           String?   @db.VarChar(2)
+  class           String?   @db.VarChar(10)
+  mobile          String    @db.VarChar(11)
+  joined_at       DateTime  @db.Timestamp(0)
+  is_banned       Int       @default(0) @db.TinyInt
+  banned_at       DateTime? @db.Timestamp(0)
+}
+
+model Teacher {
+  nic       Int       @id @db.UnsignedInt
+  name      String    @db.VarChar(255)
+  grade     String?   @db.VarChar(2)
+  class     String?   @db.VarChar(10)
+  mobile    String    @db.VarChar(11)
+  joined_at DateTime  @db.Timestamp(0)
+  is_banned Int       @default(0) @db.TinyInt
+  banned_at DateTime? @db.Timestamp(0)
+}
+
+model User {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  name       String    @db.VarChar(60)
+  email      String    @db.VarChar(60)
+  password   String    @db.VarChar(255)
+  joined_at  DateTime  @db.Timestamp(0)
+  removed_at DateTime? @db.Timestamp(0)
+  role_id    Int
+  Role       Role      @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_User_Role")
+
+  @@index([role_id], map: "fk_User_Role_idx")
+}
+
+model User_Table {
+  id      Int       @id @default(autoincrement())
+  name    String    @db.VarChar(45)
+  Members Members[]
+}
