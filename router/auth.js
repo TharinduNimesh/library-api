@@ -124,64 +124,6 @@ router.post("/register", registerValidation, async (req, res) => {
   });
 });
 
-router.get("/", [auth, refresh], (req, res) => {
-  res.send(`Hello ${req.user.name}`);
-});
-
-// Auth Middleware
-function auth(req, res, next) {
-  // Get Header
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  // Check Header
-  if (!token) {
-    return res.sendStatus(401);
-  }
-
-  // Validate Access Token
-  jwt.verify(token, process.env.ACCESS_TOKEN, (err, user) => {
-    if (err) {
-      return res.sendStatus(403);
-    }
-
-    // Assign User And Continue
-    req.user = user;
-    next();
-  });
-}
-
-async function refresh(req, res, next) {
-  const refresh_token = req.headers["refresh-token"];
-  if (refresh_token == null) {
-    return res.sendStatus(401);
-  }
-
-  // Validate Refresh Token with DB Records
-  let isCorrect = await prisma.refresh_Token.findFirst({
-    where: {
-      token: refresh_token,
-    },
-  });
-
-  if (isCorrect == null) {
-    console.log("refresh token doesnot exist");
-    return res.sendStatus(403);
-  }
-
-  // Validate Access Token
-  jwt.verify(refresh_token, process.env.REFRESH_TOKEN, (err, user) => {
-    if (err) {
-      console.log("error on refresh token");
-      return res.sendStatus(403);
-    }
-
-    // generate new access token and send it with request
-    req.access_token = generateAccessToken(user);
-    next();
-  });
-}
-
 function generateAccessToken(user) {
   return jwt.sign(
     {
