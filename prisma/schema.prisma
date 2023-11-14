@@ -60,9 +60,12 @@ model Removed {
   reason     String   @db.Text
   removed_at DateTime @db.Timestamp(0)
   holding_id Int      @db.UnsignedInt
+  removed_by Int      @db.UnsignedInt
   Holding    Holding  @relation(fields: [holding_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Removed_Holding1")
+  User       User     @relation(fields: [removed_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Removed_User1")
 
   @@index([holding_id], map: "fk_Removed_Holding1_idx")
+  @@index([removed_by], map: "fk_Removed_User1_idx")
 }
 
 model Reservation {
@@ -134,6 +137,7 @@ model User {
   joined_at  DateTime  @db.Timestamp(0)
   removed_at DateTime? @db.Timestamp(0)
   role_id    Int
+  Removed    Removed[]
   Role       Role      @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_User_Role")
 
   @@index([role_id], map: "fk_User_Role_idx")
