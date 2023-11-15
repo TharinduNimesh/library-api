@@ -5,6 +5,7 @@ import cors from "cors";
 import authRouter from "./router/auth";
 import issueRouter from "./router/issue";
 import holdingsRouter from "./router/holdings";
+import membersRouter from "./router/members";
 
 // Middlewares
 import { auth } from "./middleware/auth";
@@ -31,6 +32,7 @@ app.get("/validate", [auth, refresh], (req, res) => {
 app.use("/auth", authRouter);
 app.use("/issues", issueRouter);
 app.use("/holdings", holdingsRouter);
+app.use("/members", membersRouter);
 
 app.listen(8080);
 

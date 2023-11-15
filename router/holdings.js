@@ -108,7 +108,7 @@ router.delete(
     });
 
     // Add Removed Record
-    await prisma.removed.create({
+    await prisma.removed_Holding.create({
       data: {
         holding_id: parseInt(req.params.id),
         reason: req.body.reason,
