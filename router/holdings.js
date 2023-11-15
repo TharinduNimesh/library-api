@@ -8,10 +8,6 @@ const prisma = new PrismaClient();
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  res.send("All Holdings");
-});
-
 const holdingValidation = [
   check("serial_no").isNumeric().withMessage("Invalid serial no"),
   check("issue_id").isNumeric().withMessage("Invalid issue id"),
@@ -65,6 +61,22 @@ router.post("/new", [auth, refresh, holdingValidation], async (req, res) => {
 const deleteHoldingValidation = [
   check("reason").notEmpty().withMessage("Reason Cannot Be Empty"),
 ];
+
+router.get("/:issue", [auth, refresh], async (req, res) => {
+  const issue = await prisma.issue.findMany({
+    where: {
+      id: parseInt(req.params.issue),
+    },
+    include: {
+      Holding: true,
+    },
+  });
+
+  res.json({
+    holdings: issue,
+    access_token: req.access_token,
+  });
+});
 
 router.delete(
   "/:id",

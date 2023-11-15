@@ -14,6 +14,20 @@ const issueValidationRules = [
   check("author").notEmpty().withMessage("Author Cannot Be Empty"),
 ];
 
+router.get("/", [auth, refresh], async (req, res) => {
+  const issues = await prisma.issue.findMany({
+    include: {
+      Author: true,
+      Category: true,
+    },
+  });
+
+  res.json({
+    issues,
+    access_token: req.access_token,
+  });
+});
+
 router.post("/new", [auth, refresh, issueValidationRules], async (req, res) => {
   // Validate Request
   const errors = validationResult(req);

@@ -6,6 +6,7 @@ import authRouter from "./router/auth";
 import issueRouter from "./router/issue";
 import holdingsRouter from "./router/holdings";
 import membersRouter from "./router/members";
+import reservationRouter from "./router/reservation";
 
 // Middlewares
 import { auth } from "./middleware/auth";
@@ -33,6 +34,7 @@ app.use("/auth", authRouter);
 app.use("/issues", issueRouter);
 app.use("/holdings", holdingsRouter);
 app.use("/members", membersRouter);
+app.use("/reservation", reservationRouter);
 
 app.listen(8080);
 

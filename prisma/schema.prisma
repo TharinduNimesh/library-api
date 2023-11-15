@@ -58,14 +58,15 @@ model Members {
 }
 
 model Reservation {
-  id          Int      @id @default(autoincrement()) @db.UnsignedInt
-  reserved_at DateTime @db.Timestamp(0)
-  due_date    DateTime @db.Timestamp(0)
-  is_received DateTime @db.Timestamp(0)
-  holding_id  Int      @db.UnsignedInt
-  members_id  Int      @db.UnsignedInt
-  Holding     Holding  @relation(fields: [holding_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reservation_Holding1")
-  Members     Members  @relation(fields: [members_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reservation_Members1")
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  reserved_at DateTime  @db.Timestamp(0)
+  due_date    DateTime  @db.Timestamp(0)
+  is_received Int       @default(0) @db.TinyInt
+  holding_id  Int       @db.UnsignedInt
+  members_id  Int       @db.UnsignedInt
+  received_at DateTime? @db.Timestamp(0)
+  Holding     Holding   @relation(fields: [holding_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reservation_Holding1")
+  Members     Members   @relation(fields: [members_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reservation_Members1")
 
   @@index([holding_id], map: "fk_Reservation_Holding1_idx")
   @@index([members_id], map: "fk_Reservation_Members1_idx")
