@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { PrismaClient } from "@prisma/client";
 
 // Routes
 import authRouter from "./router/auth";
@@ -12,6 +13,7 @@ import reservationRouter from "./router/reservation";
 import { auth } from "./middleware/auth";
 import { refresh } from "./middleware/refresh";
 
+const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 app.use(
@@ -35,6 +37,12 @@ app.use("/issues", issueRouter);
 app.use("/holdings", holdingsRouter);
 app.use("/members", membersRouter);
 app.use("/reservation", reservationRouter);
+
+app.get("/authors", [auth, refresh], async (req, res) => {
+  const authors = await prisma.author.findMany();
+
+  res.json({authors});
+});
 
 app.listen(8080);
 

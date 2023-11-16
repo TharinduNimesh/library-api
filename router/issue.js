@@ -8,25 +8,57 @@ const prisma = new PrismaClient();
 
 const router = express.Router();
 
-const issueValidationRules = [
-  check("category").isNumeric().withMessage("Invalid Category"),
-  check("title").notEmpty().withMessage("Title Cannot Be Empty"),
-  check("author").notEmpty().withMessage("Author Cannot Be Empty"),
-];
-
 router.get("/", [auth, refresh], async (req, res) => {
-  const issues = await prisma.issue.findMany({
+  let issues = await prisma.issue.findMany({
     include: {
       Author: true,
       Category: true,
+      Holding: {
+        include: {
+          Reservation: true,
+        },
+      },
+    },
+  });
+
+  issues = issues.map((issue) => {
+    return {
+      title: issue.title,
+      author: issue.Author.name,
+      copies: issue.Holding.length,
+      available: issue.Holding.filter((holding) => {
+        return holding.Reservation.map((reservation) => {
+          return reservation.is_received;
+        });
+      }).length,
+    };
+  });
+
+  const removedHoldings = await prisma.removed_Holding.findMany({
+    include: {
+      Holding: {
+        include: {
+          Issue: {
+            include: {
+              Author: true,
+            },
+          },
+        },
+      },
     },
   });
 
   res.json({
     issues,
-    access_token: req.access_token,
+    removedHoldings,
   });
 });
+
+const issueValidationRules = [
+  check("category").isNumeric().withMessage("Invalid Category"),
+  check("title").notEmpty().withMessage("Title Cannot Be Empty"),
+  check("author").notEmpty().withMessage("Author Cannot Be Empty"),
+];
 
 router.post("/new", [auth, refresh, issueValidationRules], async (req, res) => {
   // Validate Request
@@ -56,10 +88,10 @@ router.post("/new", [auth, refresh, issueValidationRules], async (req, res) => {
           title: req.body.title,
         },
         {
-          category_id: req.body.category,
+          category_id: parseInt(req.body.category),
         },
         {
-          author_id: author,
+          author_id: parseInt(author),
         },
       ],
     },
@@ -75,8 +107,8 @@ router.post("/new", [auth, refresh, issueValidationRules], async (req, res) => {
   const issue = await prisma.issue.create({
     data: {
       title: req.body.title,
-      author_id: author,
-      category_id: req.body.category,
+      author_id: parseInt(author),
+      category_id: parseInt(req.body.category),
     },
   });
 

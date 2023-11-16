@@ -10,11 +10,35 @@ const prisma = new PrismaClient();
 const mobileRegex = /^(?:7|0|(?:\+94))[0-9]{9,10}$/;
 const roleRegex = /^[1-3]$/;
 
+router.get("/", [auth, refresh], async (req, res) => {
+  const students = await prisma.student.findMany();
+  const teachers = await prisma.teacher.findMany();
+  const staff = await prisma.staff.findMany();
+
+  students.map((student) => {
+    student.position = 1;
+  });
+
+  teachers.map((teacher) => {
+    teacher.position = 2;
+  });
+
+  staff.map((staff) => {
+    staff.position = 3;
+  });
+
+  const members = [...students, ...teachers, ...staff];
+  res.json({
+    members: members,
+    access_token: req.access_token,
+  });
+});
+
 const validateMember = [
-  check("name").isLength({ min: 3 }),
-  check("mobile").matches(mobileRegex),
-  check("position").matches(roleRegex),
-  check("index").notEmpty(),
+  check("name").isLength({ min: 3 }).withMessage("Name is required"),
+  check("mobile").matches(mobileRegex).withMessage("Invalid mobile number"),
+  check("position").matches(roleRegex).withMessage("Invalid position"),
+  check("index").notEmpty().withMessage("Index is required"),
 ];
 
 router.post("/new", [auth, refresh, validateMember], async (req, res) => {
