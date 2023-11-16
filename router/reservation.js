@@ -18,7 +18,15 @@ router.get("/", [auth, refresh], async (req, res) => {
   const reservations = await prisma.reservation.findMany({
     include: {
       Members: true,
-      Holding: true,
+      Holding: {
+        include: {
+          Issue: {
+            include: {
+              Author: true,
+            },
+          },
+        },
+      },
     },
   });
 
