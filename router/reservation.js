@@ -81,6 +81,7 @@ router.post("/new", [auth, refresh, validateReservation], async (req, res) => {
   const holding = await prisma.holding.findFirst({
     where: {
       serial_no: req.body.holding_id,
+      is_removed: 0,
     },
   });
 
