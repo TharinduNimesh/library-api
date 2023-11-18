@@ -23,6 +23,7 @@ router.get("/", [auth, refresh], async (req, res) => {
 
   issues = issues.map((issue) => {
     return {
+      id: issue.id,
       title: issue.title,
       author: issue.Author.name,
       copies: issue.Holding.length,

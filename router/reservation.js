@@ -15,7 +15,10 @@ const validateReservation = [
 ];
 
 router.get("/", [auth, refresh], async (req, res) => {
-  const reservations = await prisma.reservation.findMany({
+  let reservations = await prisma.reservation.findMany({
+    where: {
+      is_received: 0,
+    },
     include: {
       Members: true,
       Holding: {
@@ -30,8 +33,93 @@ router.get("/", [auth, refresh], async (req, res) => {
     },
   });
 
+  const teachers = await prisma.teacher.findMany({});
+  const students = await prisma.student.findMany({});
+  const staffs = await prisma.staff.findMany({});
+
+  const members = [students, teachers, staffs];
+
+  // return res.send(members);
+  reservations = reservations.map((reservation) => {
+    const member = members[reservation.Members.table_id - 1].filter(
+      (member) => {
+        return member.registration_no === reservation.Members.unique_id;
+      }
+    );
+
+    return {
+      id: reservation.id,
+      reserver: member[0],
+      holding_id: reservation.Holding.serial_no,
+      title: reservation.Holding.Issue.title,
+      author: reservation.Holding.Issue.Author.name,
+      reserved_at: reservation.reserved_at,
+      due_date: reservation.due_date,
+      role: reservation.Members.table_id,
+    };
+  });
+
   return res.status(200).json({
     reservations,
+    access_token: req.access_token,
+  });
+});
+
+router.get("/overdue", [auth, refresh], async (req, res) => {
+  const overdue = await prisma.reservation.findMany({
+    where: {
+      AND: [
+        {
+          is_received: 0,
+        },
+        {
+          due_date: {
+            lte: new Date(),
+          },
+        },
+      ],
+    },
+    include: {
+      Members: true,
+      Holding: {
+        include: {
+          Issue: {
+            include: {
+              Author: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const teachers = await prisma.teacher.findMany({});
+  const students = await prisma.student.findMany({});
+  const staffs = await prisma.staff.findMany({});
+
+  const members = [students, teachers, staffs];
+
+  const overdueReservations = overdue.map((reservation) => {
+    const member = members[reservation.Members.table_id - 1].filter(
+      (member) => {
+        return member.registration_no === reservation.Members.unique_id;
+      }
+    );
+
+    return {
+      id: reservation.id,
+      reserver: member[0],
+      holding_id: reservation.Holding.serial_no,
+      title: reservation.Holding.Issue.title,
+      author: reservation.Holding.Issue.Author.name,
+      reserved_at: reservation.reserved_at,
+      due_date: reservation.due_date,
+      role: reservation.Members.table_id,
+    };
+  });
+
+  return res.json({
+    overdueReservations,
     access_token: req.access_token,
   });
 });
