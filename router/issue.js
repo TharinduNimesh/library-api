@@ -28,6 +28,9 @@ router.get("/", [auth, refresh], async (req, res) => {
       author: issue.Author.name,
       copies: issue.Holding.length,
       available: issue.Holding.filter((holding) => {
+        if (holding.is_removed) {
+          return false;
+        }
         let is_received = true;
         holding.Reservation.forEach(reservation => {
           if (!reservation.is_received) {

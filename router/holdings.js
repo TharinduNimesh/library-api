@@ -100,10 +100,6 @@ router.get("/available/:id", [auth, refresh], async (req, res) => {
   });
 });
 
-const deleteHoldingValidation = [
-  check("reason").notEmpty().withMessage("Reason Cannot Be Empty"),
-];
-
 router.get("/:issue", [auth, refresh], async (req, res) => {
   const issue = await prisma.issue.findMany({
     where: {
@@ -120,6 +116,10 @@ router.get("/:issue", [auth, refresh], async (req, res) => {
   });
 });
 
+const deleteHoldingValidation = [
+  check("reason").notEmpty().withMessage("Reason Cannot Be Empty"),
+];
+
 router.delete(
   "/:id",
   [auth, refresh, deleteHoldingValidation],
@@ -133,9 +133,9 @@ router.delete(
     }
 
     // check if holding exists
-    const holding = await prisma.holding.findUnique({
+    const holding = await prisma.holding.findFirst({
       where: {
-        id: parseInt(req.params.id),
+        serial_no: req.params.id,
       },
     });
 
@@ -154,7 +154,7 @@ router.delete(
     // prisma update holdings removed at columns to 1
     await prisma.holding.update({
       where: {
-        id: parseInt(req.params.id),
+        id: holding.id,
       },
       data: {
         is_removed: 1,
@@ -164,7 +164,7 @@ router.delete(
     // Add Removed Record
     await prisma.removed_Holding.create({
       data: {
-        holding_id: parseInt(req.params.id),
+        holding_id: holding.id,
         reason: req.body.reason,
         removed_at: new Date(),
         removed_by: req.user.id,
