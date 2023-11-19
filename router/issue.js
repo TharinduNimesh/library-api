@@ -28,9 +28,13 @@ router.get("/", [auth, refresh], async (req, res) => {
       author: issue.Author.name,
       copies: issue.Holding.length,
       available: issue.Holding.filter((holding) => {
-        return holding.Reservation.map((reservation) => {
-          return reservation.is_received;
+        let is_received = true;
+        holding.Reservation.forEach(reservation => {
+          if (!reservation.is_received) {
+            is_received = false;
+          }
         });
+        return is_received ? holding : null;
       }).length,
       holdings: issue.Holding,
     };
