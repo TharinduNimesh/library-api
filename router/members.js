@@ -27,7 +27,44 @@ router.get("/", [auth, refresh], async (req, res) => {
     staff.position = 3;
   });
 
-  const members = [...students, ...teachers, ...staff];
+  const all = [...students, ...teachers, ...staff];
+
+  let members = await prisma.members.findMany({
+    include: {
+      Reservation: {
+        include: {
+          Holding: {
+            include: {
+              Issue: {
+                include: {
+                  Author: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  members = all.map((member) => {
+    const user = members.filter((m) => {
+      if (member.position == 1) {
+        return m.unique_id == member.registration_no;
+      } else {
+        return m.unique_id == member.nic;
+      }
+    });
+
+    const obj = {
+      id: user[0].id,
+      reservations: user[0].Reservation,
+      ...member,
+    };
+
+    return obj;
+  });
+
   res.json({
     members: members,
     access_token: req.access_token,

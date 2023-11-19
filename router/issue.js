@@ -32,6 +32,7 @@ router.get("/", [auth, refresh], async (req, res) => {
           return reservation.is_received;
         });
       }).length,
+      holdings: issue.Holding,
     };
   });
 
@@ -46,6 +47,7 @@ router.get("/", [auth, refresh], async (req, res) => {
           },
         },
       },
+      User: true,
     },
   });
 
