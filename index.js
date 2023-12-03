@@ -8,6 +8,7 @@ import issueRouter from "./router/issue";
 import holdingsRouter from "./router/holdings";
 import membersRouter from "./router/members";
 import reservationRouter from "./router/reservation";
+import indexRouter from "./router/index";
 
 // Middlewares
 import { auth } from "./middleware/auth";
@@ -37,6 +38,7 @@ app.use("/issues", issueRouter);
 app.use("/holdings", holdingsRouter);
 app.use("/members", membersRouter);
 app.use("/reservation", reservationRouter);
+app.use("/", indexRouter);
 
 app.get("/authors", [auth, refresh], async (req, res) => {
   const authors = await prisma.author.findMany();
