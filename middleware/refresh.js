@@ -21,10 +21,19 @@ export async function refresh(req, res, next) {
   }
 
   // Validate Access Token
-  jwt.verify(refresh_token, process.env.REFRESH_TOKEN, (err, user) => {
+  jwt.verify(refresh_token, process.env.REFRESH_TOKEN, async (err, user) => {
     if (err) {
       return res.sendStatus(403);
     }
+
+    await prisma.refresh_Token.update({
+      where: {
+        id: isCorrect.id,
+      },
+      data: {
+        used_at: new Date(),
+      },
+    });
 
     // generate new access token and send it with request
     req.access_token = generateAccessToken(user);

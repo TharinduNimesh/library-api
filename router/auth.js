@@ -62,6 +62,8 @@ router.post("/login", loginValidation, async (req, res) => {
     await prisma.refresh_Token.create({
       data: {
         token: refresh_token,
+        created_at: new Date(),
+        used_at: new Date(),
       },
     });
 

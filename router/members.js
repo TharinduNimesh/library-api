@@ -13,7 +13,11 @@ const roleRegex = /^[1-3]$/;
 router.get("/", [auth, refresh], async (req, res) => {
   const students = await prisma.student.findMany();
   const teachers = await prisma.teacher.findMany();
-  const staff = await prisma.staff.findMany();
+  const staff = await prisma.staff.findMany({
+    include: {
+      Staff_Roles: true,
+    },
+  });
 
   students.map((student) => {
     student.position = 1;
@@ -59,6 +63,7 @@ router.get("/", [auth, refresh], async (req, res) => {
     const obj = {
       id: user[0].id,
       reservations: user[0].Reservation,
+      index: member.position == 1 ? member.registration_no : member.nic,
       ...member,
     };
 
@@ -72,7 +77,7 @@ router.get("/", [auth, refresh], async (req, res) => {
 });
 
 const validateMember = [
-  check("name").isLength({ min: 3 }).withMessage("Name is required"),
+  check("name").isLength({ min: 2 }).withMessage("Name is required"),
   check("mobile").matches(mobileRegex).withMessage("Invalid mobile number"),
   check("position").matches(roleRegex).withMessage("Invalid position"),
   check("index").notEmpty().withMessage("Index is required"),
@@ -106,12 +111,13 @@ router.post("/new", [auth, refresh, validateMember], async (req, res) => {
   if (memberExists) {
     return res.status(400).json({
       message: "Member already exists",
+      member: memberExists,
     });
   }
 
   let member;
   if (position === 1) {
-    if (req.body.grade === undefined || req.body.grade === null) {
+    if (req.body.grade == "" || req.body.class == "") {
       return res.status(400).json({
         message: "Grade is required for students",
       });
@@ -126,10 +132,23 @@ router.post("/new", [auth, refresh, validateMember], async (req, res) => {
         class: req.body.class,
         mobile: req.body.mobile,
         joined_at: new Date(),
+        Members: {
+          create: {
+            unique_id: req.body.index,
+            table_id: position,
+          },
+        },
       },
     });
   } else if (position == 2) {
-    let data = {};
+    let data = {
+      Members: {
+        create: {
+          unique_id: req.body.index,
+          table_id: position,
+        },
+      },
+    };
 
     // Add Common Data
     data.nic = req.body.index;
@@ -144,7 +163,7 @@ router.post("/new", [auth, refresh, validateMember], async (req, res) => {
     }
 
     member = await prisma.teacher.create({
-      data: data,
+      data,
     });
   } else {
     // Insert Staff Into Database
@@ -154,18 +173,20 @@ router.post("/new", [auth, refresh, validateMember], async (req, res) => {
         name: req.body.name,
         mobile: req.body.mobile,
         joined_at: new Date(),
-        roles_id: req.body.role_id,
+        Staff_Roles: {
+          connect: {
+            id: parseInt(req.body.role),
+          },
+        },
+        Members: {
+          create: {
+            unique_id: req.body.index,
+            table_id: position,
+          },
+        },
       },
     });
   }
-
-  // Insert into members table
-  await prisma.members.create({
-    data: {
-      unique_id: req.body.index.toString(),
-      table_id: position,
-    },
-  });
 
   res.json({
     message: "Member added successfully",

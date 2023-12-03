@@ -13,17 +13,14 @@ model Author {
   Issue Issue[]
 }
 
-model Category {
-  id    Int     @id @default(autoincrement())
-  name  String  @db.VarChar(45)
-  Issue Issue[]
-}
-
 model Holding {
   id              Int               @id @default(autoincrement()) @db.UnsignedInt
   serial_no       String            @db.VarChar(60)
-  reserved_at     DateTime          @db.Timestamp(0)
+  reserved_at     String            @db.VarChar(20)
   is_removed      Int               @default(0) @db.TinyInt
+  publisher       String            @db.VarChar(255)
+  published_at    String            @db.VarChar(20)
+  price           Int               @default(0)
   issue_id        Int               @db.UnsignedInt
   Issue           Issue             @relation(fields: [issue_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Holding_Issue1")
   Removed_Holding Removed_Holding[]
@@ -33,16 +30,13 @@ model Holding {
 }
 
 model Issue {
-  id          Int       @id @default(autoincrement()) @db.UnsignedInt
-  title       String    @db.VarChar(80)
-  category_id Int
-  author_id   Int       @db.UnsignedInt
-  Holding     Holding[]
-  Author      Author    @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Issue_Author1")
-  Category    Category  @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Issue_Category1")
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  title     String    @db.VarChar(80)
+  author_id Int       @db.UnsignedInt
+  Holding   Holding[]
+  Author    Author    @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Issue_Author1")
 
   @@index([author_id], map: "fk_Issue_Author1_idx")
-  @@index([category_id], map: "fk_Issue_Category1_idx")
 }
 
 model Members {
@@ -53,6 +47,9 @@ model Members {
   User_Table     User_Table       @relation(fields: [table_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Members_User_Table1")
   Removed_Member Removed_Member[]
   Reservation    Reservation[]
+  Staff          Staff[]
+  Student        Student[]
+  Teacher        Teacher[]
 
   @@index([table_id], map: "fk_Members_User_Table1_idx")
 }
@@ -79,14 +76,17 @@ model Role {
 }
 
 model Staff {
-  nic         Int         @id @db.UnsignedInt
+  nic         String      @id @db.VarChar(20)
   name        String      @db.VarChar(255)
   mobile      String      @db.VarChar(11)
   joined_at   DateTime    @db.Timestamp(0)
   roles_id    Int
+  member_id   Int         @db.UnsignedInt
+  Members     Members     @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Staff_Members1")
   Staff_Roles Staff_Roles @relation(fields: [roles_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Staff_Staff_Roles1")
 
   @@index([roles_id], map: "fk_Staff_Staff_Roles1_idx")
+  @@index([member_id], map: "fk_Staff_Members1_idx")
 }
 
 model Staff_Roles {
@@ -102,15 +102,23 @@ model Student {
   class           String?  @db.VarChar(10)
   mobile          String   @db.VarChar(11)
   joined_at       DateTime @db.Timestamp(0)
+  member_id       Int      @db.UnsignedInt
+  Members         Members  @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Student_Members1")
+
+  @@index([member_id], map: "fk_Student_Members1_idx")
 }
 
 model Teacher {
-  nic       Int      @id @db.UnsignedInt
-  name      String   @db.VarChar(255)
-  grade     String?  @db.VarChar(2)
-  class     String?  @db.VarChar(10)
-  mobile    String   @db.VarChar(11)
-  joined_at DateTime @db.Timestamp(0)
+  nic        String   @id @db.VarChar(20)
+  name       String   @db.VarChar(255)
+  grade      String?  @db.VarChar(2)
+  class      String?  @db.VarChar(10)
+  mobile     String   @db.VarChar(11)
+  joined_at  DateTime @db.Timestamp(0)
+  members_id Int      @db.UnsignedInt
+  Members    Members  @relation(fields: [members_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Teacher_Members1")
+
+  @@index([members_id], map: "fk_Teacher_Members1_idx")
 }
 
 model User {
@@ -137,6 +145,7 @@ model User_Table {
 model Refresh_Token {
   id         Int      @id @default(autoincrement()) @db.UnsignedInt
   token      String?  @db.Text
+  used_at    DateTime @db.Timestamp(0)
   created_at DateTime @default(now()) @db.Timestamp(0)
 }
 

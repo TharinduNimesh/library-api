@@ -11,6 +11,10 @@ const router = express.Router();
 const holdingValidation = [
   check("serial_no").notEmpty().withMessage("Invalid serial no"),
   check("issue_id").notEmpty().withMessage("Invalid issue id"),
+  check("publisher").notEmpty().withMessage("Invalid publisher"),
+  check("published_at").isDate().withMessage("Invalid published at"),
+  check("reserved_at").isDate().withMessage("Invalid reserved at"),
+  check("price").notEmpty().withMessage("Invalid price"),
 ];
 
 router.post("/new", [auth, refresh, holdingValidation], async (req, res) => {
@@ -20,12 +24,24 @@ router.post("/new", [auth, refresh, holdingValidation], async (req, res) => {
     return res.status(400).json({ message: errors.array() });
   }
 
+  if (isNaN(req.body.issue_id)) {
+    return res
+      .status(400)
+      .json({ message: "Invalid Issue, Please Try Again!!" });
+  }
+
   // Check if issue exists
   const issue = await prisma.issue.findUnique({
     where: {
       id: parseInt(req.body.issue_id),
     },
   });
+
+  if (!issue) {
+    return res
+      .status(400)
+      .json({ message: "Issue Doesn't Exist, Add It First" });
+  }
 
   // reuturn error if serial no already exists
   const holdingExists = await prisma.holding.findFirst({
@@ -38,16 +54,15 @@ router.post("/new", [auth, refresh, holdingValidation], async (req, res) => {
     return res.status(400).json({ message: "Serial no already exists" });
   }
 
-  if (!issue) {
-    return res.status(400).json({ message: "Issue does not exist" });
-  }
-
   // Create new holding
   const holding = await prisma.holding.create({
     data: {
       serial_no: req.body.serial_no.toString(),
       issue_id: parseInt(req.body.issue_id),
-      reserved_at: new Date(),
+      publisher: req.body.publisher,
+      published_at: req.body.published_at,
+      reserved_at: req.body.reserved_at,
+      price: parseInt(req.body.price),
     },
   });
 
