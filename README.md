@@ -1,3 +1,3 @@
 # Library API
 
-Library API that developed for a school
+Simple Library API in express.js that developed for a school library
